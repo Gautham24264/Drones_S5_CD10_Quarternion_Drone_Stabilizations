@@ -3,7 +3,7 @@
 ## Drones_S5_CD10_Quarternion_Drone_Stabilization
 
 <p align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/3b/Amrita_Vishwa_Vidyapeetham_logo.svg/240px-Amrita_Vishwa_Vidyapeetham_logo.svg.png" alt="Amrita Vishwa Vidyapeetham Logo" width="180"/>
+  <img src="assets/amrita-logo.svg" alt="Amrita Vishwa Vidyapeetham Logo" width="220"/>
 </p>
 
 <p align="center"><b>Amrita Vishwa Vidyapeetham</b></p>
