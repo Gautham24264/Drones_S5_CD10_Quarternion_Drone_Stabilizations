@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quaternion Attitude Stabilization</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --ink: #e8eef9;
+      --muted: #9aa8c2;
+      --accent: #5b9dff;
+      --good: #3dd68c;
+      --warn: #f5c542;
+      --bad: #ff6b7a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: "Avenir Next", "Segoe UI", sans-serif; }
+    .deck { height: 100%; }
+    .slide {
+      display: none;
+      height: 100%;
+      padding: 56px 72px 72px;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide.active { display: flex; flex-direction: column; }
+    .kicker { color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; font-size: 13px; margin-bottom: 12px; }
+    h1 { font-size: 46px; line-height: 1.12; margin: 0 0 18px; }
+    h2 { font-size: 34px; margin: 0 0 22px; }
+    p, li { font-size: 22px; line-height: 1.45; color: var(--ink); }
+    .muted { color: var(--muted); }
+    .row { display: grid; gap: 24px; }
+    .row.two { grid-template-columns: 1fr 1fr; }
+    .row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .card {
+      background: var(--panel);
+      border: 1px solid #243049;
+      border-radius: 16px;
+      padding: 22px 24px;
+    }
+    .card h3 { margin: 0 0 10px; font-size: 20px; color: var(--accent); }
+    .fig { width: 100%; border-radius: 12px; border: 1px solid #243049; background: #fff; }
+    .footer {
+      position: absolute; left: 72px; right: 72px; bottom: 24px;
+      display: flex; justify-content: space-between; color: var(--muted); font-size: 14px;
+    }
+    code, .eq { font-family: "SF Mono", Menlo, Consolas, monospace; }
+    .eq {
+      background: #0e1626;
+      border: 1px solid #2a3a58;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 20px;
+      margin: 10px 0;
+    }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 13px; margin-right: 8px; }
+    .pill.good { background: #163628; color: var(--good); }
+    .pill.bad { background: #3a1520; color: var(--bad); }
+    .pill.warn { background: #3a2f12; color: var(--warn); }
+    a { color: var(--accent); }
+    .title-slide { justify-content: center; }
+    .big { font-size: 26px; }
+    ul { margin: 8px 0 0 18px; padding: 0; }
+    li { margin: 8px 0; }
+    .bar {
+      height: 6px; position: absolute; left: 0; top: 0; background: linear-gradient(90deg, #3d7dff, #3dd68c);
+    }
+  </style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<section class="slide title-slide active">
+  <div class="bar" style="width:6%"></div>
+  <div class="kicker">Undergraduate control project · 2026</div>
+  <h1>Quaternion-Based Drone<br>Attitude Stabilization</h1>
+  <p class="big muted">IMU sensor fusion + quaternion error + PID, on a 6-DOF quadrotor simulation.</p>
+  <p class="muted" style="margin-top:28px">Adapted from Shevidi &amp; Hashim, arXiv:2407.01275 (2024)<br>Keeping the quaternion idea, replacing sliding mode with a lab-tunable PID.</p>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:12%"></div>
+  <div class="kicker">01 · Problem</div>
+  <h2>A drone has to know which way it is pointing</h2>
+  <div class="row two">
+    <div class="card">
+      <h3>Euler angles (roll, pitch, yaw)</h3>
+      <p>Easy to picture. Near 90° pitch, roll and yaw describe the same rotation. The mapping becomes singular — <b>gimbal lock</b>.</p>
+      <p><span class="pill bad">Breaks in aggressive recovery</span></p>
+    </div>
+    <div class="card">
+      <h3>Unit quaternions</h3>
+      <p>Four numbers, no preferred axis, no singular orientation. The paper uses this for the entire attitude loop.</p>
+      <p><span class="pill good">Singularity-free</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:18%"></div>
+  <div class="kicker">02 · Paper vs this project</div>
+  <h2>Same geometry, simpler controller</h2>
+  <div class="row two">
+    <div class="card">
+      <h3>Shevidi &amp; Hashim 2024</h3>
+      <ul>
+        <li>Quaternion state and error</li>
+        <li>Adaptive backstepping (position)</li>
+        <li>Adaptive fast terminal SMC (attitude)</li>
+        <li>Finite-time proofs, chattering analysis</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>This build</h3>
+      <ul>
+        <li>Same quaternion state and error</li>
+        <li>Mahony filter on a simulated MPU-6050</li>
+        <li>PID on the vector part of \(q_e\)</li>
+        <li>6-DOF quadrotor + presentation plots</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:24%"></div>
+  <div class="kicker">03 · Architecture</div>
+  <h2>Closed-loop signal flow</h2>
+  <img class="fig" src="../results/figures/block_diagram.png" alt="Block diagram" />
+  <p class="muted">IMU → Mahony quaternion → error vs desired attitude → PID torques → motors → physical plant → IMU again.</p>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:30%"></div>
+  <div class="kicker">04 · Mathematics</div>
+  <h2>Orientation as a unit quaternion</h2>
+  <div class="eq">q = [q₀, q₁, q₂, q₃], &nbsp; q₀² + q₁² + q₂² + q₃² = 1</div>
+  <div class="eq">q̇ = ½ q ⊗ [0, ω] &nbsp;&nbsp; ← gyroscope integration</div>
+  <p>On its own this drifts. The accelerometer’s measurement of gravity is used to correct ω before integration (Mahony / Madgwick).</p>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:36%"></div>
+  <div class="kicker">05 · Sensor fusion</div>
+  <h2>Mahony correction of gyro drift</h2>
+  <div class="eq">e = v<sub>acc</sub> × v̂<sub>est</sub></div>
+  <div class="eq">ω<sub>corrected</sub> = ω + K<sub>p,f</sub> e + K<sub>i,f</sub> ∫ e dt</div>
+  <img class="fig" src="../results/figures/sensor_fusion.png" alt="Sensor fusion" style="max-height:42vh; object-fit:contain;" />
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:42%"></div>
+  <div class="kicker">06 · Control law</div>
+  <h2>Quaternion error into a PID</h2>
+  <div class="eq">q<sub>e</sub> = q<sub>desired</sub> ⊗ q<sub>current</sub><sup>−1</sup></div>
+  <div class="eq">e(t) = q<sub>e,v</sub>(t) &nbsp;→&nbsp; u = K<sub>p</sub> e + K<sub>i</sub> ∫e − K<sub>d</sub> ω</div>
+  <p>When the vehicle is on target, q<sub>e</sub> = [1, 0, 0, 0]. The vector part behaves like a rotation vector for small errors — exactly what a PID expects.</p>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:48%"></div>
+  <div class="kicker">07 · Plant</div>
+  <h2>6-DOF quadrotor (ENU, z-up)</h2>
+  <div class="eq">v̇ = g + R(q) [0, 0, F/m]</div>
+  <div class="eq">J ω̇ = −ω × (Jω) + τ &nbsp;&nbsp; m<sub>i</sub> = m<sub>hover</sub> + mix(τ)</div>
+  <div class="row three" style="margin-top:18px">
+    <div class="card"><h3>Mass</h3><p>1.0 kg lab-scale frame</p></div>
+    <div class="card"><h3>Inertia</h3><p>diag(0.012, 0.012, 0.021)</p></div>
+    <div class="card"><h3>IMU</h3><p>Gyro bias + accel noise</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:54%"></div>
+  <div class="kicker">08 · Experiment 1</div>
+  <h2>Large-angle recovery — 75° pitch</h2>
+  <img class="fig" src="../results/figures/recovery_compare.png" alt="Recovery comparison" style="max-height:62vh; object-fit:contain;" />
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:60%"></div>
+  <div class="kicker">09 · Experiment 2</div>
+  <h2>Near gimbal lock — 89.4° pitch</h2>
+  <img class="fig" src="../results/figures/gimbal_lock_compare.png" alt="Gimbal lock" style="max-height:42vh; object-fit:contain;" />
+  <img class="fig" src="../results/figures/gimbal_lock_torque.png" alt="Gimbal lock torque" style="max-height:22vh; object-fit:contain; margin-top:8px;" />
+  <p class="muted">The Euler kinematic Jacobian loses rank at 90° pitch, so the inverted torque command saturates. Quaternion PID never builds that matrix.</p>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:66%"></div>
+  <div class="kicker">10 · Inner loop</div>
+  <h2>Error signal and control effort</h2>
+  <img class="fig" src="../results/figures/recovery_control.png" alt="Control effort" style="max-height:64vh; object-fit:contain;" />
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:72%"></div>
+  <div class="kicker">11 · Tracking</div>
+  <h2>Step attitude commands</h2>
+  <img class="fig" src="../results/figures/step_tracking.png" alt="Step tracking" style="max-height:64vh; object-fit:contain;" />
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:78%"></div>
+  <div class="kicker">12 · 6-DOF mission</div>
+  <h2>Figure-eight hover under wind gusts</h2>
+  <div class="row two">
+    <img class="fig" src="../results/figures/trajectory3d.png" alt="3D trajectory" />
+    <img class="fig" src="../results/figures/position_time.png" alt="Position vs time" />
+  </div>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:84%"></div>
+  <div class="kicker">13 · Demo</div>
+  <h2>Run these during the talk</h2>
+  <div class="card">
+    <p><code>python -m simulation.live_demo</code> — matplotlib 3D recovery + mission</p>
+    <p><a href="viewer.html">Open the interactive 3D viewer</a> (uses the JSON dumped by <code>run_all</code>)</p>
+    <p class="muted">GIFs also sit in <code>results/animations/</code> if a live window is risky.</p>
+  </div>
+  <img class="fig" src="../results/animations/recovery.gif" alt="Recovery animation" style="max-height:38vh; object-fit:contain; margin-top:16px;" />
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:90%"></div>
+  <div class="kicker">14 · Hardware path</div>
+  <h2>From simulation to a table-top rig</h2>
+  <ul>
+    <li>MPU-6050 → same Mahony update already in <code>src/mahony.py</code></li>
+    <li>Gimbal: servo angle θ = θ₀ + u(t)</li>
+    <li>Quadrotor test stand: <code>src/mixer.py</code> across four ESCs</li>
+    <li>Tune K<sub>p</sub> first, then K<sub>d</sub> for damping, then a small K<sub>i</sub></li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="bar" style="width:96%"></div>
+  <div class="kicker">15 · Takeaways</div>
+  <h2>What this project shows</h2>
+  <ul>
+    <li>Quaternions remove the singularity that Euler-based PID hits near 90° pitch.</li>
+    <li>The paper’s geometry is usable without sliding-mode machinery.</li>
+    <li>Mahony fusion keeps a noisy IMU good enough to close the loop.</li>
+    <li>The same controller maps onto a gimbal or a quadrotor mixer.</li>
+  </ul>
+  <p class="muted" style="margin-top:28px">[1] Shevidi &amp; Hashim, arXiv:2407.01275, 2024.</p>
+</section>
+
+</div>
+<div class="footer"><span>Quaternion attitude stabilization</span><span id="count"></span></div>
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  let i = 0;
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle("active", k === i));
+    document.getElementById("count").textContent = (i + 1) + " / " + slides.length;
+  }
+  document.addEventListener("keydown", (e) => {
+    if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+  });
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("a")) return;
+    show(e.clientX > innerWidth / 2 ? i + 1 : i - 1);
+  });
+  show(0);
+</script>
+</body>
+</html>

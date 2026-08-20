@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quadrotor 3D viewer</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b1220; color: #e8eef9; font-family: "Segoe UI", sans-serif; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .hud {
+      position: absolute; left: 20px; top: 18px; background: rgba(18,26,43,.86);
+      border: 1px solid #243049; border-radius: 12px; padding: 12px 16px; min-width: 260px;
+    }
+    button, select {
+      background: #1f6feb; color: white; border: 0; border-radius: 8px;
+      padding: 8px 12px; margin-right: 8px; cursor: pointer;
+    }
+    select { background: #243049; }
+    .muted { color: #9aa8c2; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div><b>Quaternion drone viewer</b></div>
+    <p class="muted" id="status">Loading trajectory…</p>
+    <select id="src">
+      <option value="../results/data/recovery.json">Recovery</option>
+      <option value="../results/data/mission.json">Figure-eight mission</option>
+    </select>
+    <button id="play">Pause</button>
+  </div>
+  <canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+let data = null, frame = 0, playing = true, yawView = 0.7, pitchView = 0.45;
+
+function resize() {
+  canvas.width = innerWidth * devicePixelRatio;
+  canvas.height = innerHeight * devicePixelRatio;
+}
+addEventListener("resize", resize); resize();
+
+function quatToR(q) {
+  const [q0,q1,q2,q3] = q;
+  return [
+    [1-2*(q2*q2+q3*q3), 2*(q1*q2-q0*q3), 2*(q1*q3+q0*q2)],
+    [2*(q1*q2+q0*q3), 1-2*(q1*q1+q3*q3), 2*(q2*q3-q0*q1)],
+    [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), 1-2*(q1*q1+q2*q2)]
+  ];
+}
+function mul(R, v) {
+  return [R[0][0]*v[0]+R[0][1]*v[1]+R[0][2]*v[2],
+          R[1][0]*v[0]+R[1][1]*v[1]+R[1][2]*v[2],
+          R[2][0]*v[0]+R[2][1]*v[1]+R[2][2]*v[2]];
+}
+function add(a,b){ return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
+function project(p) {
+  const x = p[0]*Math.cos(yawView) + p[1]*Math.sin(yawView);
+  const z = -p[0]*Math.sin(yawView) + p[1]*Math.cos(yawView);
+  const y = p[2];
+  const cy = Math.cos(pitchView), sy = Math.sin(pitchView);
+  const y2 = y*cy - z*sy, z2 = y*sy + z*cy;
+  const f = 520 * devicePixelRatio / (z2 + 6);
+  return [canvas.width/2 + x*f, canvas.height*0.62 - y2*f, z2];
+}
+
+async function load(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Run python -m simulation.run_all first");
+  data = await res.json();
+  frame = 0;
+  document.getElementById("status").textContent = "Loaded " + data.t.length + " frames";
+}
+
+document.getElementById("src").onchange = (e) => load(e.target.value);
+document.getElementById("play").onclick = () => {
+  playing = !playing;
+  document.getElementById("play").textContent = playing ? "Pause" : "Play";
+};
+
+function line(a,b,color,w) {
+  const A = project(a), B = project(b);
+  ctx.strokeStyle = color; ctx.lineWidth = w * devicePixelRatio;
+  ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
+}
+function dot(p, color, r) {
+  const P = project(p);
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(P[0], P[1], r*devicePixelRatio, 0, 6.28); ctx.fill();
+}
+
+function draw() {
+  ctx.fillStyle = "#0b1220";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // ground grid
+  for (let i=-4;i<=4;i++) {
+    line([i, -4, 0],[i, 4, 0], "#1b2740", 1);
+    line([-4, i, 0],[4, i, 0], "#1b2740", 1);
+  }
+  if (data) {
+    const q = data.q[frame], p = data.position[frame];
+    const R = quatToR(q);
+    const o = p, arm = 0.35;
+    const x = mul(R,[arm,0,0]), y = mul(R,[0,arm,0]), up = mul(R,[0,0,0.25]);
+    line(add(o,[-x[0],-x[1],-x[2]]), add(o,x), "#ff6b7a", 5);
+    line(add(o,[-y[0],-y[1],-y[2]]), add(o,y), "#5b9dff", 5);
+    line(o, add(o,up), "#3dd68c", 3);
+    [[arm,arm,0],[-arm,arm,0],[-arm,-arm,0],[arm,-arm,0]].forEach(v => {
+      dot(add(o, mul(R, v.map(s => s*0.7))), "#e8eef9", 5);
+    });
+    ctx.fillStyle = "#9aa8c2";
+    ctx.font = (14*devicePixelRatio) + "px sans-serif";
+    ctx.fillText("t = " + data.t[frame].toFixed(2) + " s", 24*devicePixelRatio, canvas.height - 28*devicePixelRatio);
+    if (playing) frame = (frame + 1) % data.q.length;
+  }
+  requestAnimationFrame(draw);
+}
+load("../results/data/recovery.json").catch(err => {
+  document.getElementById("status").textContent = err.message;
+});
+draw();
+</script>
+</body>
+</html>
