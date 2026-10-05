@@ -371,21 +371,28 @@ src/
 simulation/
 ```
 
-### Quick start
+### Quick start (MATLAB — primary demo)
+
+In the MATLAB desktop:
+
+```matlab
+cd simulink
+setup
+live_demo('mission')    % real-time 3D figure-eight
+run_scenarios           % save logs to results/data/matlab_logs/
+generate_results        % offline figures → results/figures_matlab/
+```
+
+See [`simulink/README.md`](simulink/README.md) for recovery, helix, and API details.
+
+### Python (CI / batch figures)
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
 python -m unittest discover -s tests -v
 python -m simulation.run_all
-```
-
-Live 3D window (needs a display):
-
-```bash
-python -m simulation.live_demo
 ```
 
 ---
@@ -404,7 +411,7 @@ The IMU environment consists of:
 - Unit-quaternion estimate at 500 Hz
 
 The accelerometer is used to correct roll and pitch drift.
-A magnetometer is not included, so heading can wander.
+A **simulated magnetometer** (horizontal field in ENU) is fused in Mahony so **yaw is observable** in simulation; real hardware still needs mag calibration and interference handling.
 
 ---
 
@@ -413,11 +420,14 @@ A magnetometer is not included, so heading can wander.
 The project experiments with several types of UAV control:
 
 - Quaternion-error attitude PID
-- Euler-angle attitude PID
+- Adaptive backstepping position + quaternion **AFTSMC** (paper-aligned)
+- Euler-angle attitude PID (gimbal-lock baseline)
 - Large-angle recovery
 - Step attitude tracking
-- Cascaded position control
-- Figure-eight trajectory tracking
+- Cascaded position control (PID missions) / ABC (paper stack)
+- Figure-eight and **helix** trajectory tracking
+- Motor **ESC lag**, saturation, battery sag, and rotor-fault allocation
+- **Monte Carlo** robustness (30 trials, mean ± std)
 
 The inner loop stabilizes orientation. The outer loop converts a
 desired acceleration into a thrust vector and a quaternion setpoint.
@@ -542,6 +552,8 @@ The quaternion implementation demonstrated:
 
 ![recovery_compare](results/figures/recovery_compare.png)
 
+![pid_vs_aftsmc_recovery](results/figures/pid_vs_aftsmc_recovery.png)
+
 ![recovery_quaternion](results/figures/recovery_quaternion.png)
 
 ![recovery_control](results/figures/recovery_control.png)
@@ -550,12 +562,13 @@ The quaternion implementation demonstrated:
 
 ### Attitude Quantitative Results
 
-| Case | Settling / tracking | Peak \(\|\tau\|\) |
+| Case | Settling / tracking | Peak \(\|\tau\|\) (commanded) |
 |---|---|---:|
-| 75° recovery, quaternion PID | \(< 1.2^\circ\) after 4.5 s | 2.7 N·m |
-| 75° recovery, Euler PID | similar angles, more roll overshoot | 10.6 N·m |
-| Gimbal lock, quaternion PID | \(< 1.0^\circ\) | 3.3 N·m |
-| Gimbal lock, Euler PID | plant saturates; command peaks at 301 N·m | 301 N·m |
+| 75° recovery, quaternion PID | \(< 0.6^\circ\) tail | 2.73 N·m |
+| 75° recovery, adaptive AFTSMC | \(< 1.2^\circ\) tail | 1.39 N·m |
+| 75° recovery, Euler PID | \(< 0.75^\circ\) tail | 10.6 N·m |
+| Gimbal lock, quaternion PID | \(< 0.6^\circ\) | 3.30 N·m |
+| Gimbal lock, Euler PID | plant saturates; command peaks at 411 N·m | 411 N·m |
 
 Quaternion components stay unit-length to numerical precision (\(\sim 10^{-16}\)).
 
@@ -586,12 +599,37 @@ The cascaded implementation demonstrated:
 
 | Metric | Result |
 |---|---:|
-| Figure-eight altitude | 1.51 m |
-| Mean path error under gusts | 0.39 m |
+| Figure-eight altitude | 1.43 m (mean after 3 s) |
+| Mean path error under gusts | 0.32 m |
+| Helix mean path error (after 4 s) | 0.19 m |
 | Peak mission torque | 0.57 N·m |
 | Sample time | 2 ms (500 Hz) |
+| Results source | MATLAB `generate_results` (`qds.simulate`) |
+
+![trajectory3d_helix](results/figures/trajectory3d_helix.png)
+
+![robustness_monte_carlo](results/figures/robustness_monte_carlo.png)
+
+### Monte Carlo (30 trials, mean ± std)
+
+| Metric | Quaternion PID recovery (MATLAB) |
+|---|---:|
+| Tail max \|euler\| (deg) | 0.56 ± 0.05 |
+| Max \|τ\| (N·m) | 2.73 ± 0.00 |
+
+Robustness presets on recovery (MATLAB, 30 trials) stay near **0.55°** tail error under seed variation. Single-rotor failure and full AFTSMC Monte Carlo remain available via Python `simulation.monte_carlo` for deeper fault studies.
+
+See `results/data/metrics_monte_carlo.json` and `results/data/robustness_summary.json`.
 
 Generate plots and GIFs with:
+
+```matlab
+cd simulink
+setup
+generate_results   % figures + metrics from MATLAB engine
+```
+
+Python AFTSMC compare / GIFs (optional parity):
 
 ```bash
 python -m simulation.run_all
@@ -633,13 +671,23 @@ quaternion-drone-stabilization/
 │   ├── imu.py
 │   ├── quadrotor.py
 │   ├── controllers.py
+│   ├── paper_controllers.py
+│   ├── actuator.py
 │   └── mixer.py
 ├── simulation/
 │   ├── scenarios.py
+│   ├── robustness.py
+│   ├── monte_carlo.py
 │   ├── figures.py
 │   ├── animate.py
 │   ├── run_all.py
 │   └── live_demo.py
+├── simulink/
+│   ├── README.md
+│   ├── build_quadrotor_model.m
+│   ├── run_scenarios.m
+│   ├── compare_to_python.m
+│   └── +qds/   (MATLAB ports)
 ├── tests/
 │   ├── test_quaternion.py
 │   └── test_closed_loop.py
@@ -682,19 +730,21 @@ The current system is simulation-based.
 
 The project does not yet guarantee performance under real-world conditions involving:
 
-- Lighting is not relevant here, but IMU vibration is
-- Sensor scale-factor error
-- Temperature drift
-- Wind beyond the modelled gusts
-- Motor lag and propeller aerodynamics
-- Communication delays
-- Magnetic disturbances
-- Ground effect
-- Real UAV structural flexibility
+- IMU vibration and scale-factor error
+- Temperature drift and communication delays
+- Magnetic disturbances (sim uses an ideal mag field)
+- Propeller aerodynamics beyond thrust/torque mapping
+- Ground effect and structural flexibility
 
-The project also does not implement the paper’s adaptive backstepping or
-fast terminal sliding-mode laws. Further validation using physical UAV
-hardware would therefore be required.
+**Simulation scope:** adaptive ABC and AFTSMC follow the structure of arXiv:2407.01275 but are not accompanied by formal Lyapunov proofs in code. Simulink uses **ode4** at 2 ms; the Multibody plant matches Python inertia/mass when Simscape Multibody is licensed (`simulink/README.md`).
+
+## 19.1 Q&A preparation
+
+- **Why PID and AFTSMC?** PID is the MPU-6050 tuning path; AFTSMC compares the paper’s adaptive sliding-mode attitude law on the same IMU loop.
+- **Is yaw stable?** Magnetometer-aided Mahony observes yaw in sim; accel-only mode still drifts on yaw.
+- **What breaks the drone in sim?** Single-rotor failure after 2 s (Monte Carlo ~180° tail error); mass mismatch and dropout are milder (~1.2°).
+- **Simulink vs Python?** Same sample time; MATLAB reference scripts in `simulink/`; Multibody vs ODE plant may differ slightly in transients.
+- **Chattering?** AFTSMC uses `sign(s)`; compare commanded torque traces to PID in `pid_vs_aftsmc_recovery.png`.
 
 ---
 
@@ -703,11 +753,10 @@ hardware would therefore be required.
 Future improvements may include:
 
 - MPU-6050 hardware-in-the-loop testing
-- Magnetometer heading correction
 - Madgwick filter comparison
 - Full PID visual servoing on a gimbal
-- Adaptive or sliding-mode attitude laws from the base paper
-- Improved yaw control
+- Tighter Simulink–Python parity on the Multibody plant
+- Reduced chattering (boundary-layer SMC) on real ESCs
 - Camera-based attitude aiding
 - 3D target localization
 - Autonomous obstacle avoidance
@@ -722,13 +771,14 @@ Future improvements may include:
 This project developed and investigated a simulation-based quaternion
 attitude stabilization system for a quadrotor UAV.
 
-Two complementary control representations, quaternion-error PID and
-Euler-angle PID, were compared on the same plant and IMU.
+Two complementary attitude paths were compared: quaternion-error **PID**,
+**adaptive AFTSMC**, and Euler-angle PID on the same plant and IMU.
 
-The quaternion pipeline provided a convenient and singularity-free
-inner loop for large-angle recovery, while the Euler baseline showed
-how kinematic inversion fails near gimbal lock. Cascaded position
-control then flew a 6-DOF figure-eight under gusts.
+The quaternion pipeline provided a singularity-free inner loop for
+large-angle recovery, while the Euler baseline showed kinematic inversion
+failure near gimbal lock. Cascaded control flew figure-eight and helix
+missions under gusts, with Monte Carlo robustness tests and a Simulink
+reference port (500 Hz, ode4).
 
 The project successfully demonstrated the complete concept of obtaining
 inertial measurements from an IMU, estimating a unit quaternion,
