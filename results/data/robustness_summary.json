@@ -1,0 +1,90 @@
+{
+  "robustness": {
+    "mass_uncertainty": {
+      "tail_max_abs_euler_deg": {
+        "mean": 1.2233974230900093,
+        "std": 0.025778816637224096
+      },
+      "max_abs_torque_nm": {
+        "mean": 0.46322988800721987,
+        "std": 0.0001142409574275835
+      },
+      "mean_position_error_m": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    },
+    "sensor_dropout": {
+      "tail_max_abs_euler_deg": {
+        "mean": 1.2387981161318236,
+        "std": 0.0281354209424216
+      },
+      "max_abs_torque_nm": {
+        "mean": 0.4208365505121398,
+        "std": 9.718063133303754e-05
+      },
+      "mean_position_error_m": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    },
+    "rotor_failure": {
+      "tail_max_abs_euler_deg": {
+        "mean": 179.540385801145,
+        "std": 0.3161462826152329
+      },
+      "max_abs_torque_nm": {
+        "mean": 1.3549052280337404,
+        "std": 0.003131494796579863
+      },
+      "mean_position_error_m": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    },
+    "wind_gust": {
+      "tail_max_abs_euler_deg": {
+        "mean": 1.2337504752197395,
+        "std": 0.028981946980158057
+      },
+      "max_abs_torque_nm": {
+        "mean": 0.4208442095899957,
+        "std": 0.00011380502628707697
+      },
+      "mean_position_error_m": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    }
+  },
+  "recovery_comparison": {
+    "pid": {
+      "tail_max_abs_euler_deg": {
+        "mean": 0.5332388807787997,
+        "std": 0.03576599012013317
+      },
+      "max_abs_torque_nm": {
+        "mean": 0.9694159812446664,
+        "std": 0.0002849113910755447
+      },
+      "mean_position_error_m": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    },
+    "aftsmc": {
+      "tail_max_abs_euler_deg": {
+        "mean": 1.2431005776255133,
+        "std": 0.0355196328671547
+      },
+      "max_abs_torque_nm": {
+        "mean": 0.4208714904034021,
+        "std": 0.0001072735516164887
+      },
+      "mean_position_error_m": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    }
+  }
+}

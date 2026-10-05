@@ -1,0 +1,68 @@
+[
+  {
+    "name": "recovery_quaternion",
+    "final_roll_deg": -0.2810637705740702,
+    "final_pitch_deg": -0.5110271004512273,
+    "final_yaw_deg": -0.5890826298669829,
+    "tail_max_abs_euler_deg": 0.5891015968757213,
+    "max_abs_torque_nm": 2.7307221827228125,
+    "max_quat_norm_error": 1.1102230246251565e-16
+  },
+  {
+    "name": "recovery_euler",
+    "final_roll_deg": -0.23037489619087537,
+    "final_pitch_deg": -0.3043136854300416,
+    "final_yaw_deg": -0.7370032785140578,
+    "tail_max_abs_euler_deg": 0.7478861913249333,
+    "max_abs_torque_nm": 10.614086963947058,
+    "max_quat_norm_error": 2.220446049250313e-16
+  },
+  {
+    "name": "recovery_aftsmc",
+    "final_roll_deg": -0.2666453257966868,
+    "final_pitch_deg": 0.67679551984719,
+    "final_yaw_deg": -0.2515848727379546,
+    "tail_max_abs_euler_deg": 1.1865590535231796,
+    "max_abs_torque_nm": 1.390422584868424,
+    "max_quat_norm_error": 2.220446049250313e-16
+  },
+  {
+    "name": "gimbal_quaternion",
+    "final_roll_deg": -0.5352249836298142,
+    "final_pitch_deg": -0.5357197568771312,
+    "final_yaw_deg": -0.17746817126184322,
+    "tail_max_abs_euler_deg": 0.5678472513425986,
+    "max_abs_torque_nm": 3.300979849669123,
+    "max_quat_norm_error": 2.220446049250313e-16
+  },
+  {
+    "name": "gimbal_euler",
+    "final_roll_deg": 0.10195273923710915,
+    "final_pitch_deg": -0.5073290007225039,
+    "final_yaw_deg": -0.9571184765970212,
+    "tail_max_abs_euler_deg": 0.9798084227057503,
+    "max_abs_torque_nm": 411.3616362868216,
+    "max_quat_norm_error": 2.220446049250313e-16
+  },
+  {
+    "name": "mission",
+    "final_roll_deg": -0.594225985911072,
+    "final_pitch_deg": -1.04112088930901,
+    "final_yaw_deg": -1.6864546740451882,
+    "tail_max_abs_euler_deg": 1.687698694092636,
+    "max_abs_torque_nm": 0.5673356403904483,
+    "max_quat_norm_error": 1.1102230246251565e-16,
+    "mean_position_error_m_after_3s": 0.3215199315991005,
+    "mean_altitude_m_after_3s": 1.4282188689072408
+  },
+  {
+    "name": "helix_mission",
+    "final_roll_deg": 2.706332150181605,
+    "final_pitch_deg": 0.464794389847126,
+    "final_yaw_deg": 0.3467704370071145,
+    "tail_max_abs_euler_deg": 2.706332150181605,
+    "max_abs_torque_nm": 0.5673356403904483,
+    "max_quat_norm_error": 1.1102230246251565e-16,
+    "mean_position_error_m_after_4s": 0.19343983610417817
+  }
+]
