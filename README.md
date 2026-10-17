@@ -317,7 +317,7 @@ $$
 A proportional-integral law with gyro rate damping is:
 
 $$
-u = K_p\, e_q + K_i \int e_q\, dt - K_d\, \omega
+u = K_p\ e_q + K_i \int e_q\ dt - K_d \omega
 $$
 
 where:
@@ -337,7 +337,7 @@ change is the error representation.
 Translational and rotational dynamics (ENU, $z$ up) are:
 
 $$
-\dot v = g_{\mathrm{vec}} + R(q)\,[0,0,F/m]
+\dot v = g_{\mathrm{vec}} + R(q)\[0,0,F/m]
 $$
 
 $$
