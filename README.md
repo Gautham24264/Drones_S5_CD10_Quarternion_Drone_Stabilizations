@@ -233,7 +233,7 @@ so that gimbal lock can be shown under identical plant, IMU, and gains.
 Let the unit quaternion, scalar first, be:
 
 $$
-q = [q_0,\, q_1,\, q_2,\, q_3], \qquad \|q\| = 1
+q = [q_0,\ q_1,\ q_2,\ q_3], \qquad \|q\| = 1
 $$
 
 Quaternion kinematics are:
@@ -245,7 +245,7 @@ $$
 The exponential-map integration step used in code is:
 
 $$
-q \leftarrow q \otimes \bigl[\cos(\theta/2),\; \hat n \sin(\theta/2)\bigr]
+q \leftarrow q \otimes \bigl[\cos(\theta/2)\; \hat n \sin(\theta/2)\bigr]
 $$
 
 where $\theta = \|\omega\|\,\Delta t$.
@@ -264,7 +264,7 @@ e = v_{\mathrm{acc}} \times v_{\mathrm{est}}
 $$
 
 $$
-\omega_{\mathrm{corr}} = \omega + K_{p,f}\, e + K_{i,f} \int e\, dt
+\omega_{\mathrm{corr}} = \omega + K_{p,f}e_{f} + K_{i,f} \int e_{f}dt
 $$
 
 The corrected rate is integrated into the estimated quaternion.
@@ -286,7 +286,7 @@ $$
 Identity means the vehicle is already at the target:
 
 $$
-q_e = [1,\, 0,\, 0,\, 0]
+q_e = [1,\ 0,\ 0,\ 0]
 $$
 
 The shortest rotation is selected by flipping the sign if $q_{e0} < 0$,
@@ -295,7 +295,7 @@ because $q$ and $-q$ represent the same orientation.
 The PID error signal is the vector part:
 
 $$
-e_q = q_{e,v} = [q_{e1},\, q_{e2},\, q_{e3}]
+e_q = q_{e,v} = [q_{e1},\ q_{e2},\ q_{e3}]
 $$
 
 The controller attempts to drive:
