@@ -233,7 +233,7 @@ so that gimbal lock can be shown under identical plant, IMU, and gains.
 Let the unit quaternion, scalar first, be:
 
 $$
-q = [q_0,\, q_1,\, q_2,\, q_3], \qquad \|q\| = 1
+q = [q_0,\ q_1,\ q_2,\ q_3], \qquad \|q\| = 1
 $$
 
 Quaternion kinematics are:
@@ -245,7 +245,7 @@ $$
 The exponential-map integration step used in code is:
 
 $$
-q \leftarrow q \otimes \bigl[\cos(\theta/2),\; \hat n \sin(\theta/2)\bigr]
+q \leftarrow q \otimes \bigl[\cos(\theta/2)\; \hat n \sin(\theta/2)\bigr]
 $$
 
 where $\theta = \|\omega\|\,\Delta t$.
