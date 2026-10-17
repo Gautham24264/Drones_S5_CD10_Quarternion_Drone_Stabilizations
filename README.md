@@ -239,7 +239,7 @@ $$
 Quaternion kinematics are:
 
 $$
-\dot q = \tfrac12\, q \otimes [0,\, \omega]
+\dot q = \tfrac12\ q \otimes [0, \omega]
 $$
 
 The exponential-map integration step used in code is:
