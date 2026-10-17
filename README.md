@@ -55,7 +55,7 @@ using onboard inertial sensors. Roll, pitch, and yaw must remain
 controllable even during large-angle manoeuvres.
 
 Euler-angle representations are convenient near hover, but they become
-singular near \(\pm 90^\circ\) pitch. At that point roll and yaw describe
+singular near $\pm 90^\circ$ pitch. At that point roll and yaw describe
 the same motion, and a controller that inverts the Euler kinematic map
 can command unbounded torque.
 
@@ -115,7 +115,7 @@ https://arxiv.org/abs/2407.01275
 ## 3.2 Nonlinear Complementary Filters on the Special Orthogonal Group
 
 The second base paper investigates attitude estimation from IMU measurements
-using complementary filters on \(\mathrm{SO}(3)\).
+using complementary filters on $\mathrm{SO}(3)$.
 
 The work provides relevant background for understanding how gyroscope
 integration can be corrected using accelerometer gravity measurements,
@@ -179,7 +179,7 @@ flowchart TD
 
 ### 6.1 Quadrotor Plant
 
-A rigid-body quadrotor is simulated in an ENU frame with \(z\) pointing up.
+A rigid-body quadrotor is simulated in an ENU frame with $z$ pointing up.
 
 The vehicle state includes:
 
@@ -199,7 +199,7 @@ The simulated IMU provides body-frame gyroscope and accelerometer
 measurements with bias and white noise.
 
 The accelerometer reports specific force, so a level vehicle at rest
-reads gravity along body-\(z\).
+reads gravity along body-$z$.
 
 These measurements are the only attitude sensing used by the controller.
 
@@ -248,14 +248,14 @@ $$
 q \leftarrow q \otimes \bigl[\cos(\theta/2),\; \hat n \sin(\theta/2)\bigr]
 $$
 
-where \(\theta = \|\omega\|\,\Delta t\).
+where $\theta = \|\omega\|\,\Delta t$.
 
 ---
 
 ### 7.1 Mahony Sensor Fusion
 
-Let \(v_{\mathrm{acc}}\) be the measured accelerometer direction and
-\(v_{\mathrm{est}}\) the estimated gravity direction in the body frame.
+Let $v_{\mathrm{acc}}$ be the measured accelerometer direction and
+$v_{\mathrm{est}}$ the estimated gravity direction in the body frame.
 
 The complementary-filter correction is:
 
@@ -275,7 +275,7 @@ Yaw is not observable from the accelerometer alone.
 
 ### 7.2 Quaternion Attitude Error
 
-Let \(q_d\) be the desired attitude and \(q\) the estimated attitude.
+Let $q_d$ be the desired attitude and $q$ the estimated attitude.
 
 The error quaternion is:
 
@@ -289,8 +289,8 @@ $$
 q_e = [1,\, 0,\, 0,\, 0]
 $$
 
-The shortest rotation is selected by flipping the sign if \(q_{e0} < 0\),
-because \(q\) and \(-q\) represent the same orientation.
+The shortest rotation is selected by flipping the sign if $q_{e0} < 0$,
+because $q$ and $-q$ represent the same orientation.
 
 The PID error signal is the vector part:
 
@@ -322,10 +322,10 @@ $$
 
 where:
 
-- \(u\) = commanded body torque
-- \(e_q\) = quaternion vector error
-- \(K_p, K_i, K_d\) = controller gains
-- \(\omega\) = measured body rate
+- $u$ = commanded body torque
+- $e_q$ = quaternion vector error
+- $K_p, K_i, K_d$ = controller gains
+- $\omega$ = measured body rate
 
 The same numerical gains are given to the Euler baseline. The only
 change is the error representation.
@@ -334,7 +334,7 @@ change is the error representation.
 
 ### 7.4 Rigid-Body Plant
 
-Translational and rotational dynamics (ENU, \(z\) up) are:
+Translational and rotational dynamics (ENU, $z$ up) are:
 
 $$
 \dot v = g_{\mathrm{vec}} + R(q)\,[0,0,F/m]
@@ -344,7 +344,7 @@ $$
 J\dot\omega = -\omega \times (J\omega) + \tau
 $$
 
-where \(F\) is collective thrust and \(\tau\) is body torque.
+where $F$ is collective thrust and $\tau$ is body torque.
 
 ---
 
@@ -431,7 +431,7 @@ gains, plant, and IMU.
 
 ### 11.1 Quaternion PID
 
-Quaternion PID uses the vector part of \(q_e\).
+Quaternion PID uses the vector part of $q_e$.
 
 For example:
 
@@ -447,13 +447,13 @@ This remains defined at large pitch angles.
 ### 11.2 Euler PID
 
 Euler PID wraps roll/pitch/yaw error and inverts the Euler kinematic
-Jacobian \(E(\theta)\).
+Jacobian $E(\theta)$.
 
 ```python
 tau = np.linalg.solve(E, u)
 ```
 
-That map loses rank near \(\pm 90^\circ\) pitch, which is gimbal lock
+That map loses rank near $\pm 90^\circ$ pitch, which is gimbal lock
 inside the controller.
 
 ---
@@ -466,12 +466,12 @@ into four motor commands.
 It provides a direct path from simulation to later hardware:
 
 - Four ESCs on a quadrotor test stand
-- Optional gimbal servo mapping \(\theta_{\mathrm{servo}} = \theta_0 + u(t)\)
+- Optional gimbal servo mapping $\theta_{\mathrm{servo}} = \theta_0 + u(t)$
 
 The intended sensor is an MPU-6050, or equivalent, sampled at
-\(\ge 200\) Hz.
+$\ge 200$ Hz.
 
-Tune \(K_p\) first, then \(K_d\) to damp overshoot, then a small \(K_i\)
+Tune $K_p$ first, then $K_d$ to damp overshoot, then a small $K_i$
 if a steady offset remains.
 
 ---
@@ -550,14 +550,14 @@ The quaternion implementation demonstrated:
 
 ### Attitude Quantitative Results
 
-| Case | Settling / tracking | Peak \(\|\tau\|\) |
+| Case | Settling / tracking | Peak $\|\tau\|$ |
 |---|---|---:|
-| 75° recovery, quaternion PID | \(< 1.2^\circ\) after 4.5 s | 2.7 N·m |
+| 75° recovery, quaternion PID | $< 1.2^\circ$ after 4.5 s | 2.7 N·m |
 | 75° recovery, Euler PID | similar angles, more roll overshoot | 10.6 N·m |
-| Gimbal lock, quaternion PID | \(< 1.0^\circ\) | 3.3 N·m |
+| Gimbal lock, quaternion PID | $< 1.0^\circ$ | 3.3 N·m |
 | Gimbal lock, Euler PID | plant saturates; command peaks at 301 N·m | 301 N·m |
 
-Quaternion components stay unit-length to numerical precision (\(\sim 10^{-16}\)).
+Quaternion components stay unit-length to numerical precision ($\sim 10^{-16}$).
 
 ---
 
@@ -568,7 +568,7 @@ The cascaded implementation demonstrated:
 - Successful hover takeoff
 - Figure-eight path tracking
 - IMU closed-loop flight
-- Wind gusts after \(t = 4\) s
+- Wind gusts after $t = 4$ s
 - Bounded inner-loop torque
 - Motor mixing throughout the manoeuvre
 
@@ -610,7 +610,7 @@ Metrics are written to `results/data/metrics.json`.
 | Position cascade | Yes | Not used as primary |
 | Singularity-free error | Yes | No |
 | Large-angle recovery | Stable | Overshoot / inversion risk |
-| Near \(\pm 90^\circ\) pitch | Bounded torque | Unbounded command |
+| Near $\pm 90^\circ$ pitch | Bounded torque | Unbounded command |
 | Peak torque, gimbal case | 3.3 N·m | 301 N·m |
 | Hardware mapping | Direct | Fragile at large tilt |
 | Development complexity | Moderate | Lower near hover |
@@ -659,8 +659,8 @@ quaternion-drone-stabilization/
 
 The system was considered operational when:
 
-- Unit tests passed for quaternion algebra and \(\mathrm{SO}(3)\) maps.
-- Exponential-map integration preserved \(\|q\| = 1\).
+- Unit tests passed for quaternion algebra and $\mathrm{SO}(3)$ maps.
+- Exponential-map integration preserved $\|q\| = 1$.
 - Mahony roll/pitch estimates converged from a wrong initial quaternion.
 - Hover thrust held altitude on the 6-DOF plant.
 - Attitude-only mode did not translate the vehicle.
@@ -768,10 +768,10 @@ Default simulation parameters:
 | Quantity | Value |
 |---|---|
 | Mass | 1.0 kg |
-| Inertia | \(\mathrm{diag}(0.012,\, 0.012,\, 0.021)\) kg·m² |
-| Gravity | 9.81 m/s² (ENU, \(z\) up) |
-| Attitude PID | \(K_p=4.5\), \(K_i=0.15\), \(K_d=0.55\) |
-| Mahony | \(K_{p,f}=1.8\), \(K_{i,f}=0.04\) |
+| Inertia | $\mathrm{diag}(0.012,\, 0.012,\, 0.021)$ kg·m² |
+| Gravity | 9.81 m/s² (ENU, $z$ up) |
+| Attitude PID | $K_p=4.5$, $K_i=0.15$, $K_d=0.55$ |
+| Mahony | $K_{p,f}=1.8$, $K_{i,f}=0.04$ |
 | Sample time | 2 ms (500 Hz) |
 | IMU | gyro bias + white noise, accelerometer noise |
 
